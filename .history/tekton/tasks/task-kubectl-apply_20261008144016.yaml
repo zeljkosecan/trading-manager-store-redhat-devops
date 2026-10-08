@@ -1,0 +1,20 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: kubectl-apply
+  namespace: ze1se1-dev
+spec:
+  params:
+    - name: manifestPath
+      type: string
+      description: Path to manifest(s) relative to the workspace
+  workspaces:
+    - name: source
+  steps:
+    - name: apply
+      image: registry.redhat.io/openshift4/ose-cli:latest
+      script: |
+        set -e
+        cd "$(workspaces.source.path)"
+        # Assumes 'oc' is available in the image
+        oc apply -f "$(params.manifestPath)" -n ze1se1-dev

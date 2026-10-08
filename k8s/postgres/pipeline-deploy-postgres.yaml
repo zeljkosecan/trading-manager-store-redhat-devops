@@ -1,0 +1,41 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: deploy-postgres
+  namespace: ze1se1-dev
+spec:
+  params:
+    - name: git-url
+      type: string
+    - name: git-revision
+      type: string
+      default: main
+    - name: manifestPath
+      type: string
+      default: k8s/postgres-resources.yaml
+  workspaces:
+    - name: shared-workspace
+  tasks:
+    - name: clone-repo
+      taskRef:
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+      params:
+        - name: url
+          value: $(params.git-url)
+        - name: revision
+          value: $(params.git-revision)
+
+    - name: apply-manifests
+      runAfter:
+        - clone-repo
+      taskRef:
+        name: kubectl-apply
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+      params:
+        - name: manifestPath
+          value: $(params.manifestPath)

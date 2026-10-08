@@ -1,0 +1,54 @@
+# apiVersion: tekton.dev/v1
+# kind: PipelineRun
+# metadata:
+#   name: deploy-postgres-run
+#   namespace: ze1se1-dev
+# spec:
+#   pipelineRef:
+#     name: deploy-postgres
+#   workspaces:
+#     - name: shared-workspace
+#       volumeClaimTemplate:
+#         metadata:
+#           name: deploy-postgres-workspace-pvc
+#         spec:
+#           accessModes:
+#             - ReadWriteOnce
+#           resources:
+#             requests:
+#               storage: 1Gi
+#   params:
+#     - name: git-url
+#       value: https://your.git.repo/example.git
+#     - name: git-revision
+#       value: main
+#     - name: manifestPath
+#       value: k8s/postgres-resources.yaml
+
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  name: deploy-postgres-run
+  namespace: ze1se1-dev
+spec:
+  pipelineRef:
+    name: deploy-postgres
+  workspaces:
+  - name: shared-workspace
+    volumeClaimTemplate:
+      metadata:
+        name: deploy-postgres-workspace-pvc
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+  params:
+  - name: git-revision
+    value: main
+  - name: manifestPath
+    value: k8s/postgres-resources.yaml
+  - name: repo-secret-name
+    value: github-tekton   # or github-combined
+

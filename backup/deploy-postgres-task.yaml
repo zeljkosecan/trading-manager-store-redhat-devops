@@ -1,0 +1,22 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: deploy-postgres
+  namespace: ze1se1-dev
+spec:
+  params:
+    - name: DEPLOYMENT_PATH
+      type: string
+      default: k8s/postgres/postgresql-deployment.yaml
+    - name: SERVICE_PATH
+      type: string
+      default: k8s/postgres/postgresql-service.yaml
+  workspaces:
+    - name: source
+  steps:
+    - name: apply-postgres
+      image: registry.redhat.io/openshift4/ose-cli
+      script: |
+        set -e
+        oc apply -f /workspace/source/$(params.DEPLOYMENT_PATH) -n ze1se1-dev
+        oc apply -f /workspace/source/$(params.SERVICE_PATH) -n ze1se1-dev

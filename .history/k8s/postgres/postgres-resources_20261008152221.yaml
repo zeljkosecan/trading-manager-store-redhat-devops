@@ -1,0 +1,96 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-secret
+  namespace: ze1se1-dev
+type: Opaque
+stringData:
+  POSTGRES_DB: trading-manager-store-1
+  POSTGRES_USER: trading-manager
+  POSTGRES_PASSWORD: samplepass123
+  POSTGRES_HOST: postgres          # service name in-cluster
+  POSTGRES_PORT: "5432"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: github-tekton
+  namespace: ze1se1-dev
+type: Opaque
+stringData:
+  GITHUB_URL: https://zeljkosecan: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@github.com/zeljkosecan/trading-manager-store-redhat-devops.git
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: github-combined
+  namespace: ze1se1-dev
+type: Opaque
+stringData:
+  GIT_URL_WITH_TOKEN: https://<TOKEN>@github.com/my-org/my-repo.git
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: ze1se1-dev
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  # Optionally specify storageClassName if needed:
+  # storageClassName: <your-storage-class>
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: ze1se1-dev
+  labels:
+    app: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: registry.redhat.io/rhel8/postgresql-15:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - secretRef:
+                name: postgres-secret
+          ports:
+            - containerPort: 5432
+              name: postgres
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/pgsql/data
+      volumes:
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: postgres-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: ze1se1-dev
+  labels:
+    app: postgres
+spec:
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+      protocol: TCP
+      name: postgres
